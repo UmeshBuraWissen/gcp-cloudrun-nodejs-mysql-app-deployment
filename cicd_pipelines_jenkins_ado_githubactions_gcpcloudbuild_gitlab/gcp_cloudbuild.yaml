@@ -1,0 +1,24 @@
+steps:
+  # Build the Docker image with both version and latest tags
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t', 'gcr.io/$PROJECT_ID/nodejsapp:$_VERSION',  # Tag with the version
+      '-t', 'gcr.io/$PROJECT_ID/nodejsapp:latest',     # Additional "latest" tag
+      './gcp_nodejs_app/'
+    ]
+
+  # Push both tags to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/nodejsapp:$_VERSION']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/nodejsapp:latest']
+
+images:
+  - 'gcr.io/$PROJECT_ID/nodejsapp:${_VERSION}'
+  - 'gcr.io/$PROJECT_ID/nodejsapp:latest'  # Include the "latest" tag in the images list
+
+logsBucket: 'terraformbackendmysqlapplication'
+options:
+  logging: GCS_ONLY
