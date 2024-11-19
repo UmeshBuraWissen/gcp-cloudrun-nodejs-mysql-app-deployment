@@ -6,7 +6,7 @@ eg: for windows run : SET AZDO_PERSONAL_ACCESS_TOKEN="Pass_ZDO_PERSONAL_ACCESS_T
                       SET AZDO_ORG_SERVICE_URL="Pass_AZDO_ORG_SERVICE_URL"
 step 3: run the terraform init command locally to initizalation and backend configration
 step 4: run the terraform plan command locally to see the resource provisioning details
-step 4: run the terraform apply command locally to provisioning the resource
+step 5: run the terraform apply command locally to provisioning the resource
 
 
 Section 2:

@@ -7,15 +7,14 @@ const session = require('express-session');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 
 const app = express();
-//const port = process.env.PORT || 4000; // Use the PORT environment variable for Cloud Run or local development
-const port = process.env.port || 4000; // Use the PORT environment variable for Cloud Run
-const project_id = process.env.projectid
-const db_connection_name = process.env.dbconnectionname
-
+const port = process.env.PORT || 4000;  // Use the PORT environment variable for Cloud Run or local development
+const project_id = process.env.projectid;
+const db_connection_name = process.env.dbconnectionname;
 
 // Initialize Secret Manager Client
 const client = new SecretManagerServiceClient();
 
+// Function to get secrets from Google Secret Manager
 async function getSecret(secretName) {
     const [version] = await client.accessSecretVersion({
         name: `projects/${project_id}/secrets/${secretName}/versions/latest`,
@@ -58,7 +57,7 @@ connectToDatabase().then(connection => {
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(session({
-    secret: 'your-secret-key', // Replace with a strong secret in production
+    secret: process.env.SESSION_SECRET || 'your-secret-key',  // Consider storing this securely in env variables
     resave: false,
     saveUninitialized: true,
 }));
@@ -66,20 +65,6 @@ app.use(session({
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use('/images', express.static(path.join(__dirname, 'images')));
-
-/* // Initialize Database Connections
-let db; // Connection for user management (registration_db)
-let stationDb; // Connection for station data (wissen_fleet)
-
-async function initializeDatabases() {
-    try {
-        db = await connectToDatabase('registration_db'); // Connect to registration_db
-        stationDb = await connectToDatabase('wissen_fleet'); // Connect to wissen_fleet
-    } catch (err) {
-        console.error('Error initializing databases:', err);
-        process.exit(1); // Exit if database connections fail
-    }
-} */
 
 // Middleware to check if user is logged in
 function isAuthenticated(req, res, next) {
@@ -99,7 +84,7 @@ app.get('/', (req, res) => {
 
 // Registration Route
 app.post('/register', async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, phone, address } = req.body;
 
     try {
         // Hash the password
@@ -113,23 +98,21 @@ app.post('/register', async (req, res) => {
                 return res.status(500).send('Error during registration');
             }
 
-            // Automatically log the user in after registration
-            const loginSql = 'SELECT * FROM users WHERE username = ?';
-            db.query(loginSql, [username], (err, results) => {
+            // Insert user details into userdetails table
+            const userId = result.insertId;  // Get the user ID from the 'users' table
+            const userDetailsSql = `
+                INSERT INTO userdetails (userid, username, phone_number, email_address, address)
+                VALUES (?, ?, ?, ?, ?)
+            `;
+            db.query(userDetailsSql, [userId, username, phone, email, address], (err, result) => {
                 if (err) {
-                    console.error('Error fetching user after registration:', err);
-                    return res.status(500).send('Error during login');
+                    console.error('Error inserting user details:', err);
+                    return res.status(500).send('Error inserting user details');
                 }
 
-                if (results.length === 0) {
-                    return res.status(401).send('Invalid user');
-                }
-
-                // Set session variables
-                req.session.userId = results[0].id;
-                req.session.username = results[0].username;
-
-                // Redirect to the dashboard
+                // After successful registration, log the user in
+                req.session.userId = userId;  // Storing the new user's ID
+                req.session.username = username;  // Storing username
                 res.redirect('/dashboard');
             });
         });
@@ -177,31 +160,30 @@ app.post('/login', (req, res) => {
 app.get('/dashboard', isAuthenticated, (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 
-    const username = req.session.username;
+    const { username, userId } = req.session;
 
-    // Query station data from wissen_fleet database
-    const sql = `
-        SELECT 
-            id, 
-            name, 
-            addressId, 
-            phoneNumber, 
-            emailId, 
-            stationInfoId, 
-            createdDateTime, 
-            lastUpdatedDateTime, 
-            status 
-        FROM station
+    // Query user details from the userdetails table
+    const userDetailsQuery = `
+        SELECT userid, username, phone_number, email_address, address 
+        FROM userdetails 
+        WHERE username = ? AND userid = ?;
     `;
 
-    stationDb.query(sql, (err, results) => {
+    db.query(userDetailsQuery, [username, userId], (err, results) => {
         if (err) {
-            console.error('Error fetching station data:', err);
-            return res.status(500).send('Error loading dashboard data');
+            console.error('Error fetching user details:', err);
+            return res.status(500).send('Error loading user details');
         }
 
-        // Pass station data to dashboard view
-        res.render('dashboard', { username, stationData: results });
+        if (results.length === 0) {
+            return res.status(404).send('No user details found for the current user');
+        }
+
+        // Pass user details as an object (results[0])
+        res.render('dashboard', { 
+            username, 
+            userDetails: results 
+        });
     });
 });
 
@@ -215,9 +197,7 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// Start the server after initializing databases
+// Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
- 
-

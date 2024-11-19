@@ -73,61 +73,71 @@
 
         /* Right - Registration Form */
         .right {
-            width: 400px;
+            width: 400px; /* Reduced width */
+            max-height: 80vh; /* Max height to allow scrolling */
             padding: 30px;
             background: #fff;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             margin-left: 40px; /* Add space between left and right containers */
+            overflow-y: auto; /* Enable scrolling */
         }
 
         .right h2 {
             text-align: center;
-            font-size: 28px;
+            font-size: 30px;
             margin-bottom: 20px;
-            color: #3c3f58;
+            color: #333;
+            font-weight: bold;
         }
 
-        /* Form Styling */
-        .right form {
+        .right .form-group {
+            margin-bottom: 20px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
         }
 
         .right label {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 5px;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: bold;
         }
 
         .right input {
-            padding: 12px;
+            padding: 15px;
+            border-radius: 10px;
             border: 1px solid #ddd;
-            border-radius: 8px;
             font-size: 16px;
             outline: none;
             transition: all 0.3s ease;
+            box-sizing: border-box;
+            margin-bottom: 20px;
         }
 
         .right input:focus {
-            border-color: #4c6ef5;
-            box-shadow: 0 0 5px rgba(76, 110, 245, 0.4);
+            border-color: #2575fc;
+            box-shadow: 0 0 8px rgba(37, 117, 252, 0.6);
         }
 
         .right button {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background-color: #4c6ef5;
+            padding: 15px;
+            background-color: #2575fc;
             color: white;
             font-size: 18px;
+            border: none;
+            border-radius: 10px;
             cursor: pointer;
+            width: 100%;
             transition: background-color 0.3s ease;
         }
 
         .right button:hover {
-            background-color: #3b5bbf;
+            background-color: #6a11cb;
+        }
+
+        .right button:active {
+            transform: scale(0.98);
         }
 
         .right .login-link {
@@ -136,7 +146,7 @@
         }
 
         .right .login-link a {
-            color: #4c6ef5;
+            color: #2575fc;
             text-decoration: none;
             font-size: 16px;
         }
@@ -174,10 +184,13 @@
             width: 400px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .modal-content input {
-            padding: 12px;
+            padding: 14px;
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -187,7 +200,6 @@
 
         .close {
             color: #aaa;
-            float: right;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
@@ -198,7 +210,6 @@
             color: black;
             text-decoration: none;
         }
-
     </style>
 </head>
 
@@ -215,25 +226,43 @@
     <!-- Main Content -->
     <main>
         <!-- Left side (background image) -->
-        <div class="left">
-            <!-- You can add any content here if you want on the left side -->
-        </div>
+        <div class="left"></div>
 
         <!-- Right - Registration Form -->
         <div class="right">
             <h2>Register Here</h2>
             <form action="/register" method="POST">
-                <label for="username">Username:</label>
-                <input type="text" name="username" required>
+                <!-- First three fields: Username, Email, Phone -->
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" name="username" required>
+                </div>
 
-                <label for="email">Email:</label>
-                <input type="email" name="email" required>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" name="email" required>
+                </div>
 
-                <label for="password">Password:</label>
-                <input type="password" name="password" required minlength="6" title="Password must be at least 6 characters long">
+                <div class="form-group">
+                    <label for="phone">Phone Number:</label>
+                    <input type="text" name="phone" required>
+                </div>
+
+                <!-- Additional fields: Address and Password -->
+                <div class="form-group">
+                    <label for="address">Address:</label>
+                    <input type="text" name="address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" name="password" required minlength="6" title="Password must be at least 6 characters long">
+                </div>
 
                 <button type="submit">Register</button>
             </form>
+
+            <!-- Login Option -->
             <div class="login-link">
                 <p>Already have an account? <a href="javascript:void(0);" id="loginLink">Login here</a></p>
             </div>
@@ -278,33 +307,22 @@
             modal.style.display = "flex";
         }
 
-        // Close the modal when the "×" is clicked
+        // Close the modal when "X" is clicked
         closeModal.onclick = function() {
             modal.style.display = "none";
-            clearLoginForm(); // Clear the form fields when closing the modal
         }
 
-        // Close the modal if the user clicks outside the modal
+        // Close the modal when clicking outside of it
         window.onclick = function(event) {
             if (event.target == modal) {
                 modal.style.display = "none";
-                clearLoginForm(); // Clear the form fields when clicking outside the modal
             }
         }
 
-        // Switch to registration page from the login modal
+        // Show sign up link inside the login modal
         signupLink.onclick = function() {
             modal.style.display = "none";
             registrationForm.scrollIntoView({ behavior: "smooth" });
-        }
-
-        // Function to clear the login form fields
-        function clearLoginForm() {
-            var loginForm = document.querySelector("#loginModal form");
-            var inputs = loginForm.querySelectorAll("input");
-            inputs.forEach(function(input) {
-                input.value = ''; // Clear each input value
-            });
         }
     </script>
 
