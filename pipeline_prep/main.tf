@@ -10,7 +10,7 @@ terraform {
     }
     google = {
       source  = "hashicorp/google"
-      version = "4.46.0"
+      version = "6.11.2"
     }
   }
 }
@@ -57,7 +57,8 @@ resource "google_project_iam_custom_role" "artifact_create_on_push_admin" {
     "artifactregistry.repositories.create",        # Permission to create repositories on push
     "artifactregistry.repositories.get",           # Permission to read repository details
     "artifactregistry.repositories.list",          # Permission to list repositories
-    "artifactregistry.repositories.uploadArtifacts" # Permission to upload (push) artifacts to repositories
+    "artifactregistry.repositories.uploadArtifacts",
+    "cloudbuild.builds.create" # Permission to upload (push) artifacts to repositories
   ]
 }
 
@@ -217,6 +218,27 @@ module "container_registry" {
   description   = each.value["description"]
   format        = each.value["format"]
 }
+
+
+module "cloud-build-trigger" {
+  source = "./modules/cloud-build-trigger"
+  for_each = { for i in var.build_config : i.name => i }
+    name = each.value["name"]
+  #   location = "global"
+  project  = each.value["project"]
+  disabled = each.value["disabled"]
+    # uri = each.value["uri"]
+    path = each.value["path"]
+    # repo_type = each.value["repo_type"]
+    # revision  = each.value["revision"]
+    owner = each.value["owner"]
+    github_reponame  = each.value["github_reponame"]
+      branch       = each.value["branch"]
+      invert_regex = each.value["invert_regex"]
+
+  service_account = each.value["service_account"]
+}
+
 
 
 
