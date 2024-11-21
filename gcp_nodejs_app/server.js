@@ -23,15 +23,14 @@ async function getSecret(secretName) {
 }
 
 // Database connection
-async function connectToDatabase() {
+/* async function connectToDatabase() {
     const user = await getSecret('DB_USERNAME');
     const password = await getSecret('DB_PASSWORD');
     
     const db = mysql.createConnection({
-        host: `/cloudsql/${db_connection_name}`, // Use Cloud SQL connection name
+        host: `${db_connection_name}`, // Use Cloud SQL connection name
         user: user,
-        password: password,
-        database: 'registration_db', // Ensure this database exists
+        password: password, // Ensure this database exists
     });
 
     db.connect(err => {
@@ -40,9 +39,94 @@ async function connectToDatabase() {
             return;
         }
         console.log('Connected to database');
+
     });
 
     return db;
+} */
+
+    async function connectToDatabase() {
+        const user = await getSecret('DB_USERNAME');
+        const password = await getSecret('DB_PASSWORD');
+        
+        //const db_connection_name = 'your-cloud-sql-connection-name'; // Replace with your Cloud SQL connection name
+    
+        // Step 1: Connect to MySQL
+        const db = mysql.createConnection({
+            host: `${db_connection_name}`,
+            //host: `${db_connection_name}`, // Use Cloud SQL connection name
+            user: user,
+            password: password,
+        });
+    
+        // Connect to MySQL
+        db.connect(async (err) => {
+            if (err) {
+                console.error('Database connection failed:', err);
+                return;
+            }
+            console.log('Connected to database');
+    
+            // Step 2: Check if the database exists, and create it if it does not
+            db.query('CREATE DATABASE IF NOT EXISTS registration_db', (err, results) => {
+                if (err) {
+                    console.error('Error creating database:', err);
+                    return;
+                }
+                console.log('Database "registration_db" is ready or has been created');
+                
+                // Step 3: Use the newly created or existing database
+                db.changeUser({ database: 'registration_db' }, (err) => {
+                    if (err) {
+                        console.error('Error switching to "registration_db":', err);
+                        return;
+                    }
+                    console.log('Switched to "registration_db"');
+    
+                    // Step 4: Create the 'users' table if it doesn't exist
+                    const createUsersTableQuery = `
+                        CREATE TABLE IF NOT EXISTS users (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            username VARCHAR(50) NOT NULL,
+                            email VARCHAR(100) NOT NULL UNIQUE,
+                            password VARCHAR(255) NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    `;
+                    
+                    db.query(createUsersTableQuery, (err, results) => {
+                        if (err) {
+                            console.error('Error creating users table:', err);
+                            return;
+                        }
+                        console.log('Table "users" is ready or has been created');
+                        
+                        // Step 5: Create the 'userdetails' table if it doesn't exist
+                        const createUserDetailsTableQuery = `
+                            CREATE TABLE IF NOT EXISTS userdetails (
+                                detail_id INT AUTO_INCREMENT PRIMARY KEY,
+                                userid INT NOT NULL,
+                                username VARCHAR(255) NOT NULL,
+                                phone_number VARCHAR(15),
+                                email_address VARCHAR(255),
+                                address TEXT,
+                                FOREIGN KEY (userid) REFERENCES users(id)
+                            );
+                        `;
+                        
+                        db.query(createUserDetailsTableQuery, (err, results) => {
+                            if (err) {
+                                console.error('Error creating userdetails table:', err);
+                                return;
+                            }
+                            console.log('Table "userdetails" is ready or has been created');
+                        });
+                    });
+                });
+            });
+        });
+    
+        return db;
 }
 
 // Connect to the database
