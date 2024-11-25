@@ -1,4 +1,4 @@
--- Create the database
+/* -- Create the database
 CREATE DATABASE registration_db;
  
 -- Select the database to use
@@ -23,7 +23,7 @@ CREATE TABLE userdetails (
     email_address VARCHAR(255),              -- Email address
     address TEXT,                            -- Address
     FOREIGN KEY (userid) REFERENCES users(id) -- Foreign key linking to users table
-);
+); */
 
 INSERT INTO users (id, username, email, password, created_at)
 VALUES (1, 'wissen1', 'wissen1@wissen.com', '$2a$10$1c7x2NvWc8vHTzWya1vD6uZS.uPKL7oC/CX5NAwkOk2tVNpkqkYLS',	'2024-11-18 13:28:36'),
