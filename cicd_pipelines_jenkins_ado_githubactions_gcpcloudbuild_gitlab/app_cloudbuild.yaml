@@ -1,6 +1,6 @@
 steps:
   # Step 1: Build the Docker image with both build number and "latest" tags
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: 'Build the Docker image with both build number and "latest" tags'
     args:
       - 'build'
       - '-t'
@@ -10,19 +10,19 @@ steps:
       - './gcp_nodejs_app/'
 
   # Step 2: Push the build number tag to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: 'Push the build number tag to Artifact Registry'
     args:
       - 'push'
       - 'us-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REGISTRY}/nodejsapp:$BUILD_ID'
 
   # Step 3: Push the "latest" tag to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: 'Push the "latest" tag to Artifact Registry'
     args:
       - 'push'
       - 'us-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REGISTRY}/nodejsapp:latest'
 
   # Step 4: Deploy a new revision to the existing Cloud Run service
-  - name: 'gcr.io/cloud-builders/gcloud'
+  - name: 'Deploy a new revision to the existing Cloud Run service'
     args:
       - 'run'
       - 'deploy'
